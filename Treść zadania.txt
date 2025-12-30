@@ -1,0 +1,20 @@
+W ramach zadania należy zaimplementować Podstawowy Algorytm Genetyczny do rozwiązania problemu plecakowego.
+
+Aplikacja musi przyjąć jako dane wejściowe dowolną liczbę przedmiotów opisanych wartością i wagą oraz maksymalną wagę plecaka. Jako efekt działania aplikacja musi zwrócić informację o przedmiotach, 
+które mają trafić do plecaka oraz o wartości sumarycznej tych przedmiotów.
+
+Język implementacji jest dowolny, forma interfejsu użytkownika jest dowolna, sposób wprowadzania danych jest dowolny (poprzez interfejs, z pliku lub inne formy).
+
+Parametry algorytmu:
+
+Wersja – podstawowy algorytm genetyczny
+
+Globalne prawdopodobieństwo krzyżowania – 0.8
+
+Globalne prawdopodobieństwo mutacji – 0.2
+
+Metoda selekcji – koło ruletki
+
+Metoda usuwania osobników, dla których waga przekracza dopuszczalną – dowolna
+
+Warunek zatrzymania algorytmu - dowolny
