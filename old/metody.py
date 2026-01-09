@@ -1,5 +1,5 @@
 import random
-from klasy import Przedmiot, Plecak
+from old.klasy import Przedmiot, Plecak
 
 def inicjalizuj_przedmioty(maksymalna_waga: float) -> list:
     przedmioty = []
@@ -15,22 +15,22 @@ def inicjalizuj_przedmioty(maksymalna_waga: float) -> list:
             przedmioty.append(przedmiot)
     return przedmioty
 
-def poczatkowy_osobnik(losowe_przedmioty: list, plecak: object) -> dict:
+def poczatkowy_osobnik(losowe_przedmioty: list, plecak: object) -> object:
     for przedmiot in losowe_przedmioty:
         plecak.dodaj_przedmiot(przedmiot)
-        losowe_przedmioty.remove(przedmiot)
     return plecak
 
 def stworz_populacje_startowa(rozmiar_populacji: int, przedmioty: list, maksymalna_waga: float) -> list:
     populacja = []
     for _ in range(rozmiar_populacji):
         while True:
-            plecak = Plecak(maksymalna_waga, przedmioty)
+            plecak = Plecak(maksymalna_waga)
             k = random.randint(2, len(przedmioty))
             losowe_przedmioty = random.sample(przedmioty, k)
             osobnik = poczatkowy_osobnik(losowe_przedmioty, plecak)
             if osobnik.oblicz_calkowita_wage <= maksymalna_waga: 
-                break            
+                break
+            
         populacja.append(osobnik)
     return populacja
 
@@ -38,12 +38,18 @@ def funkcja_przystosowania(osobnik: object, ilosc_wszystkich_przedmiotow: int, m
     #jak największa wartość przedmiotów w plecaku
     max_wartosc = ilosc_wszystkich_przedmiotow*max_wartosc_przedmiotu # Maksymalna możliwa wartość (50 przedmiotów po 350 każdy)
     wartosc_osobnika = osobnik.oblicz_calkowita_wartosc
-    return (wartosc_osobnika / max_wartosc) * 100
+    if osobnik.oblicz_calkowita_wage > osobnik.maksymalna_waga:
+        osobnik.wartosc_funkcji_przystosowania = 0
+    else: 
+        osobnik.wartosc_funkcji_przystosowania = (wartosc_osobnika / max_wartosc) * 100
+    return osobnik.wartosc_funkcji_przystosowania
 
 def selekcja(populacja: list, ilosc_przedmiotow: int, max_wartosc_przedmiotu: int) -> list:
     #zsumować wszystkie wartości przystosowania
     wartosci_przystosowania = [funkcja_przystosowania(osobnik, ilosc_przedmiotow, max_wartosc_przedmiotu) for osobnik in populacja]
     suma_wartosci = sum(wartosci_przystosowania)
+    if suma_wartosci == 0:
+        return []
     prawdopodobienstwa = [wartosc / suma_wartosci for wartosc in wartosci_przystosowania]
     wybrani_osobnicy = random.choices(populacja, weights=prawdopodobienstwa, k=len(populacja))
     return wybrani_osobnicy
@@ -52,32 +58,17 @@ def selekcja(populacja: list, ilosc_przedmiotow: int, max_wartosc_przedmiotu: in
 def krzyzowanie(osobnik1: object, osobnik2: object) -> tuple:
     prawdopodobienstwo_krzyzowania = 0.8
     if random.random() <= prawdopodobienstwo_krzyzowania: 
-        wszystkie_przedmioty = osobnik1.wszystkie_przedmioty 
-        dlugosc_genotypu = len(wszystkie_przedmioty)
+        locus = random.randint(1, min(len(osobnik1.dodane_przedmioty), len(osobnik2.dodane_przedmioty)) - 1)
+        dziecko1_przedmioty = osobnik1.dodane_przedmioty[:locus] + osobnik2.dodane_przedmioty[locus:]
+        dziecko2_przedmioty = osobnik2.dodane_przedmioty[:locus] + osobnik1.dodane_przedmioty[locus:]
 
-        if dlugosc_genotypu < 2:
-             return osobnik1, osobnik2
+        dziecko1 = Plecak(osobnik1.maksymalna_waga)
+        for przedmiot in dziecko1_przedmioty:
+            dziecko1.dodaj_przedmiot(przedmiot)
 
-        locus = random.randint(1, dlugosc_genotypu - 1)
-
-        gen1 = list(osobnik1.osobnik.values())
-        gen2 = list(osobnik2.osobnik.values())
-
-        dziecko1_genotyp = gen1[:locus] + gen2[locus:]
-        dziecko2_genotyp = gen2[:locus] + gen1[locus:]
-
-        dziecko1 = Plecak(osobnik1.maksymalna_waga, wszystkie_przedmioty)
-        for i, bit in enumerate(dziecko1_genotyp):
-            if bit == 1:
-                przedmiot = wszystkie_przedmioty[i]
-                dziecko1.dodaj_przedmiot(przedmiot)
-
-        dziecko2 = Plecak(osobnik2.maksymalna_waga, wszystkie_przedmioty)
-        for i, bit in enumerate(dziecko2_genotyp):
-            if bit == 1:
-                przedmiot = wszystkie_przedmioty[i]
-                dziecko2.dodaj_przedmiot(przedmiot)
-        
+        dziecko2 = Plecak(osobnik2.maksymalna_waga)
+        for przedmiot in dziecko2_przedmioty:
+            dziecko2.dodaj_przedmiot(przedmiot)
         dziecka = [dziecko1, dziecko2]
         return dziecka
     else:
@@ -87,9 +78,14 @@ def krzyzowanie(osobnik1: object, osobnik2: object) -> tuple:
 def mutacja(osobnik: object, przedmioty: list) -> object:
     prawdopodobienstwo_mutacji = 0.2
     if random.random() <= prawdopodobienstwo_mutacji:
-        indeks_do_zmiany = random.randint(0, len(przedmioty) - 1)
-        if osobnik.wszystkie_przedmioty[indeks_do_zmiany] not in osobnik.dodane_przedmioty:
-            osobnik.dodaj_przedmiot(osobnik.wszystkie_przedmioty[indeks_do_zmiany])
-        else: 
-            osobnik.dodane_przedmioty.remove(osobnik.wszystkie_przedmioty[indeks_do_zmiany])
+        indeks_do_usuniecia = random.randint(0, len(osobnik.dodane_przedmioty) - 1)
+        przedmiot_do_usuniecia = osobnik.dodane_przedmioty[indeks_do_usuniecia]
+        osobnik.przedmioty.remove(przedmiot_do_usuniecia)
+        przedmioty_lokalnie = [przedmiot for przedmiot in przedmioty]
+        przedmioty_lokalnie.remove(przedmiot_do_usuniecia)
+        dostepne_przedmioty = [przedmiot for przedmiot in przedmioty if przedmiot not in osobnik.dodane_przedmioty]
+        if dostepne_przedmioty:
+            nowy_przedmiot = random.choice(dostepne_przedmioty)
+            osobnik.dodaj_przedmiot(nowy_przedmiot)
     return osobnik
+
