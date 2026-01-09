@@ -4,34 +4,31 @@ class Przedmiot:
         self.wartosc = wartosc
         self.waga = waga
 
+    def __repr__(self):
+        # Ta metoda mówi Pythonowi, co ma pokazać, gdy obiekt jest w liście
+        return f"{self.nazwa}(w:{self.wartosc}, kg:{self.waga})"
+
 class Plecak:
-    def __init__(self, maksymalna_waga, funkcja_przystosowania=None):
+    def __init__(self, maksymalna_waga: float, wszystkie_przedmioty: list, genotyp: list = None):
         self.maksymalna_waga = maksymalna_waga
         self.przedmioty = []
-        self.funkcja_przystosowania = funkcja_przystosowania
-        
-    def dodaj_przedmiot(self, przedmiot):
-        self.przedmioty.append(przedmiot)
+        self.wszystkie_przedmioty = wszystkie_przedmioty
+        if genotyp is None:
+            self.genotyp = [0] * len(wszystkie_przedmioty)
+        else: 
+            self.genotyp = genotyp
+
+    def dodaj_przedmiot(self, nazwa):
+        index = self.wszystkie_przedmioty.index(nazwa)
+        self.genotyp[index] = self.genotyp[index] ^ 1
+        self.przedmioty.append(nazwa)
 
     @property
     def dodane_przedmioty(self):
         return self.przedmioty
     @property
     def oblicz_calkowita_wage(self):
-        return sum(przedmiot.waga for przedmiot in self.przedmioty)
+        return sum(p.waga for p in self.przedmioty)
     @property
     def oblicz_calkowita_wartosc(self):
-        return sum(przedmiot.wartosc for przedmiot in self.przedmioty)
-    
-
-
-
-
-
-    '''
-        osobnik1 -> plecak(20): przedmiot1, przedmiot2, ...
-        osobnik2 -> plecak(20): przedmiot3, przedmiot4, ...
-        osobnik_dziecko1 -> plecak(20): przedmiot1, przedmiot4, ...
-        osobnik_dziecko2 -> plecak(20): przedmiot3, przedmiot2, ...
-
-    '''
+        return sum(p.wartosc for p in self.przedmioty)
